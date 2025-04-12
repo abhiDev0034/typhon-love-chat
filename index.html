@@ -5,6 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Bubu 💖 Dudu</title>
   <link href="https://fonts.googleapis.com/css2?family=Baloo+2&display=swap" rel="stylesheet">
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
   <style>
     body {
       margin: 0;
@@ -25,16 +27,6 @@
     @keyframes popIn {
       0% { transform: scale(0); opacity: 0; }
       100% { transform: scale(1); opacity: 1; }
-    }
-    @keyframes floatHearts {
-      0% { transform: translateY(0); opacity: 1; }
-      100% { transform: translateY(-200px); opacity: 0; }
-    }
-    .heart {
-      position: absolute;
-      font-size: 1.5rem;
-      animation: floatHearts 4s linear infinite;
-      color: red;
     }
     .chat-container {
       width: 90%;
@@ -135,6 +127,17 @@
       border-radius: 10px;
       display: block;
     }
+    .heart {
+      position: fixed;
+      bottom: 0;
+      font-size: 2rem;
+      animation: floatUp 4s linear forwards;
+      z-index: 999;
+    }
+    @keyframes floatUp {
+      0% { bottom: 0; opacity: 1; }
+      100% { bottom: 100vh; opacity: 0; }
+    }
   </style>
 </head>
 <body>
@@ -158,49 +161,65 @@
     <div class="input-area">
       <button onclick="sendMessage()">📤</button>
       <input type="text" id="messageInput" placeholder="Type a message..." onkeydown="handleKey(event)" />
-      <input type="file" id="imageInput" accept="image/*" style="display:none" onchange="sendImage(event)">
-      <button onclick="document.getElementById('imageInput').click()">🖼️</button>
-      <button onclick="sendSticker()">💖</button>
-      <button onclick="sendEmoji()">😊</button>
-      <button onclick="sendVoiceNote()">🎤</button>
     </div>
   </div>
   <div class="footer" style="display:none">Made with 💖 by Bubu for Dudu</div>
 
   <script>
-    const PASSWORD = "TYPHONMEDHAK";
+    const firebaseConfig = {
+      // Import the functions you need from the SDKs you need
+import { initializeApp } from "firebase/app";
+// TODO: Add SDKs for Firebase products that you want to use
+// https://firebase.google.com/docs/web/setup#available-libraries
+
+// Your web app's Firebase configuration
+const firebaseConfig = {
+  apiKey: "AIzaSyAqzKNi_ZVnC5POJjTp8fkDkeK1T1C2iDc",
+  authDomain: "bubu-dudu-chat-4d342.firebaseapp.com",
+  projectId: "bubu-dudu-chat-4d342",
+  storageBucket: "bubu-dudu-chat-4d342.firebasestorage.app",
+  messagingSenderId: "919364987356",
+  appId: "1:919364987356:web:51cc3932309b133b310719"
+};
+
+// Initialize Firebase
+const app = initializeApp(firebaseConfig);
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+
+    const PASSWORDS = {
+      TYPHONMEDHAK: "chat_typhonmedhak",
+      MAT128: "chat_mat128"
+    };
+
+    let currentChatPath = null;
+
     function checkPassword() {
       const entered = document.getElementById("passwordInput").value;
-      if (entered === PASSWORD) {
+      if (PASSWORDS[entered]) {
+        currentChatPath = PASSWORDS[entered];
         document.getElementById("login-screen").style.display = "none";
         document.querySelector("header").style.display = "block";
         document.querySelector(".chat-container").style.display = "flex";
         document.querySelector(".footer").style.display = "block";
+        loadMessages();
         startHearts();
       } else {
         alert("Oops! That’s not the right password, Dudu 🥺");
       }
     }
 
-    let messagesContainer = document.getElementById("messages");
-
-    function playPop() {
-      const pop = new Audio("https://cdn.pixabay.com/audio/2022/03/15/audio_6cd69a0467.mp3");
-      pop.play();
-    }
+    const messagesContainer = document.getElementById("messages");
 
     function sendMessage() {
       const input = document.getElementById("messageInput");
       const text = input.value.trim();
-      if (text) {
-        const div = document.createElement("div");
-        div.className = "message";
-        div.textContent = text;
-        messagesContainer.appendChild(div);
-        saveToLocalStorage(text);
+      if (text && currentChatPath) {
+        const message = { text, time: Date.now() };
+        db.ref(currentChatPath).push(message);
         input.value = "";
-        messagesContainer.scrollTop = messagesContainer.scrollHeight;
-        playPop();
       }
     }
 
@@ -211,67 +230,21 @@
     }
 
     function clearChat() {
-      messagesContainer.innerHTML = "";
-      localStorage.removeItem("chatMessages");
-    }
-
-    function sendImage(event) {
-      const file = event.target.files[0];
-      if (file) {
-        const reader = new FileReader();
-        reader.onload = function(e) {
-          const div = document.createElement("div");
-          div.className = "message";
-          const img = document.createElement("img");
-          img.src = e.target.result;
-          div.appendChild(img);
-          messagesContainer.appendChild(div);
-          saveToLocalStorage(`<img src='${e.target.result}' />`);
-          playPop();
-        };
-        reader.readAsDataURL(file);
+      if (currentChatPath) {
+        db.ref(currentChatPath).remove();
+        messagesContainer.innerHTML = "";
       }
     }
 
-    function sendSticker() {
-      sendEmoji('💌');
-    }
-
-    function sendEmoji(emoji = '😊') {
-      const div = document.createElement("div");
-      div.className = "message";
-      div.textContent = emoji;
-      messagesContainer.appendChild(div);
-      saveToLocalStorage(emoji);
-      playPop();
-    }
-
-    function sendVoiceNote() {
-      const div = document.createElement("div");
-      div.className = "message";
-      div.textContent = "🎤 Voice note sent (imaginary for now)";
-      messagesContainer.appendChild(div);
-      saveToLocalStorage("🎤 Voice note sent (imaginary for now)");
-      playPop();
-    }
-
-    function saveToLocalStorage(content) {
-      let messages = JSON.parse(localStorage.getItem("chatMessages")) || [];
-      messages.push(content);
-      localStorage.setItem("chatMessages", JSON.stringify(messages));
-    }
-
     function loadMessages() {
-      let messages = JSON.parse(localStorage.getItem("chatMessages")) || [];
-      messages.forEach(content => {
+      messagesContainer.innerHTML = "";
+      db.ref(currentChatPath).on("child_added", snapshot => {
+        const msg = snapshot.val();
         const div = document.createElement("div");
         div.className = "message";
-        if (content.startsWith("<img")) {
-          div.innerHTML = content;
-        } else {
-          div.textContent = content;
-        }
+        div.textContent = msg.text;
         messagesContainer.appendChild(div);
+        messagesContainer.scrollTop = messagesContainer.scrollHeight;
       });
     }
 
@@ -280,13 +253,11 @@
         const heart = document.createElement("div");
         heart.className = "heart";
         heart.style.left = Math.random() * 100 + "%";
-        heart.textContent = "❤️";
+        heart.textContent = ["❤️", "💖", "💕", "💘", "💝"][Math.floor(Math.random() * 5)];
         document.body.appendChild(heart);
         setTimeout(() => heart.remove(), 4000);
       }, 1000);
     }
-
-    window.onload = loadMessages;
   </script>
 </body>
 </html>
