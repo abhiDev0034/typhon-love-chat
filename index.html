@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Bubu 💖 Dudu</title>
+  <link href="https://fonts.googleapis.com/css2?family=Baloo+2&display=swap" rel="stylesheet">
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      background: pink;
+      font-family: 'Baloo 2', cursive;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      height: 100vh;
+      overflow: hidden;
+    }
+    header {
+      font-size: 2rem;
+      margin: 20px;
+      animation: popIn 1.2s ease-out;
+    }
+    @keyframes popIn {
+      0% { transform: scale(0); opacity: 0; }
+      100% { transform: scale(1); opacity: 1; }
+    }
+    @keyframes floatHearts {
+      0% { transform: translateY(0); opacity: 1; }
+      100% { transform: translateY(-200px); opacity: 0; }
+    }
+    .heart {
+      position: absolute;
+      font-size: 1.5rem;
+      animation: floatHearts 4s linear infinite;
+      color: red;
+    }
+    .chat-container {
+      width: 90%;
+      max-width: 600px;
+      background: white;
+      border-radius: 20px;
+      padding: 10px;
+      display: flex;
+      flex-direction: column;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+      position: relative;
+      animation: fadeIn 1s ease;
+      margin-top: 20px;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .messages {
+      flex: 1;
+      overflow-y: auto;
+      max-height: 300px;
+      padding: 10px;
+    }
+    .input-area {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      margin-top: 10px;
+      flex-wrap: wrap;
+    }
+    .input-area input[type="text"] {
+      flex: 1;
+      padding: 10px;
+      border-radius: 20px;
+      border: 1px solid #ccc;
+      font-size: 1rem;
+    }
+    .input-area button {
+      background: transparent;
+      border: none;
+      cursor: pointer;
+      font-size: 1.5rem;
+    }
+    .message {
+      margin-bottom: 10px;
+      padding: 8px 12px;
+      background-color: #f8d1e0;
+      border-radius: 15px;
+      max-width: 80%;
+      word-wrap: break-word;
+    }
+    .top-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 5px 10px;
+      font-size: 1rem;
+    }
+    .footer {
+      text-align: center;
+      padding: 5px;
+      font-size: 0.8rem;
+    }
+    #login-screen {
+      position: absolute;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: pink;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      z-index: 1000;
+      animation: pulseHeart 2s infinite ease-in-out;
+    }
+    @keyframes pulseHeart {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.05); }
+    }
+    #login-screen input {
+      padding: 10px;
+      border-radius: 10px;
+      border: 1px solid #aaa;
+      font-size: 1rem;
+      margin-top: 10px;
+    }
+    #login-screen button {
+      margin-top: 10px;
+      padding: 10px 20px;
+      border-radius: 10px;
+      background: white;
+      border: 1px solid #ccc;
+      font-size: 1rem;
+      cursor: pointer;
+    }
+    .message img {
+      max-width: 100px;
+      border-radius: 10px;
+      display: block;
+    }
+  </style>
+</head>
+<body>
+  <audio autoplay loop>
+    <source src="https://cdn.pixabay.com/audio/2022/03/16/audio_b32e4f13c7.mp3" type="audio/mp3">
+  </audio>
+  <div id="login-screen">
+    <h2>Welcome Bubu 💕</h2>
+    <p>Enter your magical password to join Dudu!</p>
+    <input type="password" id="passwordInput" placeholder="Enter Password">
+    <button onclick="checkPassword()">Unlock 💖</button>
+  </div>
+
+  <header style="display:none">Welcome to Bubu & Dudu's World 💕</header>
+  <div class="chat-container" style="display:none">
+    <div class="top-bar">
+      <button onclick="clearChat()">🧹 Clear Chat</button>
+      <span>Chatting Panel 💬</span>
+    </div>
+    <div class="messages" id="messages"></div>
+    <div class="input-area">
+      <button onclick="sendMessage()">📤</button>
+      <input type="text" id="messageInput" placeholder="Type a message..." onkeydown="handleKey(event)" />
+      <input type="file" id="imageInput" accept="image/*" style="display:none" onchange="sendImage(event)">
+      <button onclick="document.getElementById('imageInput').click()">🖼️</button>
+      <button onclick="sendSticker()">💖</button>
+      <button onclick="sendEmoji()">😊</button>
+      <button onclick="sendVoiceNote()">🎤</button>
+    </div>
+  </div>
+  <div class="footer" style="display:none">Made with 💖 by Bubu for Dudu</div>
+
+  <script>
+    const PASSWORD = "TYPHONMEDHAK";
+    function checkPassword() {
+      const entered = document.getElementById("passwordInput").value;
+      if (entered === PASSWORD) {
+        document.getElementById("login-screen").style.display = "none";
+        document.querySelector("header").style.display = "block";
+        document.querySelector(".chat-container").style.display = "flex";
+        document.querySelector(".footer").style.display = "block";
+        startHearts();
+      } else {
+        alert("Oops! That’s not the right password, Dudu 🥺");
+      }
+    }
+
+    let messagesContainer = document.getElementById("messages");
+
+    function playPop() {
+      const pop = new Audio("https://cdn.pixabay.com/audio/2022/03/15/audio_6cd69a0467.mp3");
+      pop.play();
+    }
+
+    function sendMessage() {
+      const input = document.getElementById("messageInput");
+      const text = input.value.trim();
+      if (text) {
+        const div = document.createElement("div");
+        div.className = "message";
+        div.textContent = text;
+        messagesContainer.appendChild(div);
+        saveToLocalStorage(text);
+        input.value = "";
+        messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        playPop();
+      }
+    }
+
+    function handleKey(event) {
+      if (event.key === "Enter") {
+        sendMessage();
+      }
+    }
+
+    function clearChat() {
+      messagesContainer.innerHTML = "";
+      localStorage.removeItem("chatMessages");
+    }
+
+    function sendImage(event) {
+      const file = event.target.files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          const div = document.createElement("div");
+          div.className = "message";
+          const img = document.createElement("img");
+          img.src = e.target.result;
+          div.appendChild(img);
+          messagesContainer.appendChild(div);
+          saveToLocalStorage(`<img src='${e.target.result}' />`);
+          playPop();
+        };
+        reader.readAsDataURL(file);
+      }
+    }
+
+    function sendSticker() {
+      sendEmoji('💌');
+    }
+
+    function sendEmoji(emoji = '😊') {
+      const div = document.createElement("div");
+      div.className = "message";
+      div.textContent = emoji;
+      messagesContainer.appendChild(div);
+      saveToLocalStorage(emoji);
+      playPop();
+    }
+
+    function sendVoiceNote() {
+      const div = document.createElement("div");
+      div.className = "message";
+      div.textContent = "🎤 Voice note sent (imaginary for now)";
+      messagesContainer.appendChild(div);
+      saveToLocalStorage("🎤 Voice note sent (imaginary for now)");
+      playPop();
+    }
+
+    function saveToLocalStorage(content) {
+      let messages = JSON.parse(localStorage.getItem("chatMessages")) || [];
+      messages.push(content);
+      localStorage.setItem("chatMessages", JSON.stringify(messages));
+    }
+
+    function loadMessages() {
+      let messages = JSON.parse(localStorage.getItem("chatMessages")) || [];
+      messages.forEach(content => {
+        const div = document.createElement("div");
+        div.className = "message";
+        if (content.startsWith("<img")) {
+          div.innerHTML = content;
+        } else {
+          div.textContent = content;
+        }
+        messagesContainer.appendChild(div);
+      });
+    }
+
+    function startHearts() {
+      setInterval(() => {
+        const heart = document.createElement("div");
+        heart.className = "heart";
+        heart.style.left = Math.random() * 100 + "%";
+        heart.textContent = "❤️";
+        document.body.appendChild(heart);
+        setTimeout(() => heart.remove(), 4000);
+      }, 1000);
+    }
+
+    window.onload = loadMessages;
+  </script>
+</body>
+</html>
